@@ -1,0 +1,169 @@
+
+import java.io.IOException;
+
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.FileOutputFormat;
+import org.apache.hadoop.mapred.JobClient; n
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.TextInputFormat;
+import org.apache.hadoop.mapred.TextOutputFormat;
+public class WordCount{  
+public static void main(String[] args) throws IOException{  
+JobConf conf = new JobConf(WordCount.class);        // defining job configuration
+conf.setJobName("WordCount1"); // used to give name to the job
+	conf.setInputFormat(TextInputFormat.class);  // take input from the file in text format
+      conf.setOutputFormat(TextOutputFormat.class); // take output from the file in text format
+        conf.setOutputKeyClass(Text.class);  // output key format
+       conf.setOutputValueClass(IntWritable.class);          // output value format
+      conf.setMapperClass(WordCountMapper.class);  
+      conf.setCombinerClass(WordCountReducer.class);  
+      conf.setReducerClass(WordCountReducer.class);           
+       FileInputFormat.setInputPaths(conf,new Path(args[0]));  // a.txt file (input file)
+        FileOutputFormat.setOutputPath(conf,new Path(args[1]));   //output directory out
+       JobClient.runJob(conf); // used to start the job 
+    }  
+}  
+
+
+
+
+   import java.io.IOException;  
+   import java.util.StringTokenizer;  
+   import org.apache.hadoop.io.IntWritable;  
+   import org.apache.hadoop.io.LongWritable;  
+  import org.apache.hadoop.io.Text;  
+   import org.apache.hadoop.mapred.MapReduceBase;  
+   import org.apache.hadoop.mapred.Mapper;  
+   import org.apache.hadoop.mapred.OutputCollector;  
+   import org.apache.hadoop.mapred.Reporter;  
+   public class WordCountMapper extends MapReduceBase implements Mapper<LongWritable,Text,Text,IntWritable>{    
+      public void map(LongWritable key, Text value,OutputCollector<Text,IntWritable> output,   
+              Reporter reporter) throws IOException{  
+          String line = value.toString();  // used to convert text class to string 
+         StringTokenizer  tokenizer = new StringTokenizer(line); // class used to divide into tokens 
+          while (tokenizer.hasMoreTokens()){  
+              String p=(tokenizer.nextToken());//string will be divided into tokens and stored in the object p  
+              output.collect(new Text(p), new IntWritable(1));  // used to collect the data in the form of Text and IntWritable(ex:hi,1)
+           }  
+       }  
+    
+  } 
+  
+  
+  
+  
+  
+  
+import java.io.IOException;  
+import java.util.Iterator;  
+  import org.apache.hadoop.io.IntWritable;  
+  import org.apache.hadoop.io.Text;  
+import org.apache.hadoop.mapred.MapReduceBase;  
+import org.apache.hadoop.mapred.OutputCollector;  
+import org.apache.hadoop.mapred.Reducer;  
+ import org.apache.hadoop.mapred.Reporter;  
+ 
+public class WordCountReducer extends MapReduceBase implements Reducer<Text,IntWritable,Text,IntWritable> {  
+public void reduce(Text key, Iterator<IntWritable> values,OutputCollector<Text,IntWritable> output,  
+  Reporter reporter) throws IOException {  
+ int sum=0;  
+while (values.hasNext()) {  //(hi,[1,1,1,1]) is the input value to iterator and 
+	// values.hasnext is used to verify whether data is existing or not its a boolean statement 
+ sum+=values.next().get();// sum=sum+values.next() is used to take the value 1 from the iterator 
+ // but it is a intwritable data .so u need to convert into integer becouse sum is of int type so we use a method 
+ // .get() for convertion   
+ 
+ }  
+output.collect(key,new IntWritable(sum));  
+ }  
+ }  
+ 
+ 
+ package SalesCountry;
+import java.io.IOException;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.*;
+public class SalesCountryMapper extends MapReduceBase implements Mapper <LongWritable, Text, Text, IntWritable>
+{
+private final static IntWritable one = new IntWritable(1);
+public void map(LongWritable key, Text value, OutputCollector <Text, IntWritable> output, Reporter reporter) throws IOException
+{
+String valueString = value.toString();
+String[] SingleCountryData = valueString.split(",");
+output.collect(new Text(SingleCountryData[7]), one);
+}
+}
+
+
+package SalesCountry;
+import java.io.IOException;
+import java.util.*;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.*;
+public class SalesCountryReducer extends MapReduceBase implements Reducer<Text, IntWritable, Text, IntWritable> 
+{
+public void reduce(Text t_key, Iterator<IntWritable> values, OutputCollector<Text,IntWritable> output, Reporter reporter) throws IOException
+{
+Text key = t_key;
+int frequencyForCountry = 0;
+while (values.hasNext()) {
+// replace type of value with the actual type of our value
+IntWritable value = (IntWritable) values.next();
+frequencyForCountry += value.get();
+}
+output.collect(key, new IntWritable(frequencyForCountry));
+}
+}
+
+
+#include <mpi.h>
+int main(int argc, char ** argv)
+{
+int mynode, totalnodes;
+MPI_Init(&argc,&argv);
+MPI_Comm_size(MPI_COMM_WORLD, &totalnodes);
+MPI_Comm_rank(MPI_COMM_WORLD, &mynode);
+cout << "Hello world from process " << mynode;
+cout << " of " << totalnodes << endl;
+MPI_Finalize();
+}
+
+#include<iostream.h>
+#include<mpi.h>
+int main(int argc, char ** argv)
+{
+int mynode, totalnodes;
+int sum,startval,endval,accum;
+MPI_Status status;
+MPI_Init(argc,argv);
+MPI_Comm_size(MPI_COMM_WORLD, &totalnodes);
+MPI_Comm_rank(MPI_COMM_WORLD, &mynode);
+sum = 0;
+startval = 1000*mynode/totalnodes+1;
+endval = 1000*(mynode+1)/totalnodes;
+for(int i=startval;i<=endval;i=i+1)
+sum = sum + i;
+if(mynode!=0)
+MPI_Send(&sum,1,MPI_INT,0,1,MPI_COMM_WORLD);
+else
+for(int j=1;j<totalnodes;j=j+1)
+{
+MPI_Recv(&accum,1,MPI_INT,j,1,MPI_COMM_WORLD,
+&status);
+sum = sum + accum;
+}
+if(mynode == 0)
+cout << "The sum from 1 to 1000 is: " << sum <<
+endl;
+MPI_Finalize();
+}
+
+
+  
+  
